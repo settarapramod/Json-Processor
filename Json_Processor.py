@@ -12,23 +12,28 @@ class JSONProcessor:
         """Initialize JSON Processor with a separator for child table names."""
         self.separator = separator
 
+    def _merge_list_objects(self, data_list):
+        """Merge list objects with different structures into a single DataFrame."""
+        all_keys = set().union(*(d.keys() for d in data_list if isinstance(d, dict)))
+        return pd.DataFrame([{key: obj.get(key, None) for key in all_keys} for obj in data_list])
+
     def _flatten_json(self, data, parent_name="root"):
-        """Flattens JSON while preserving column names and structuring child tables."""
+        """Flattens JSON while keeping column names unchanged and structuring child tables."""
         flattened = {}
         child_tables = {}
 
         def _flatten(obj, current_parent):
             if isinstance(obj, dict):
                 for k, v in obj.items():
-                    _flatten(v, current_parent)  # Keep column names unchanged
+                    _flatten(v, current_parent + self.separator + k)  # Update parent-child naming
             elif isinstance(obj, list):
-                table_name = f"{current_parent}{self.separator}{parent_key}"  # Use parent name + separator + key name
-                child_tables[table_name] = pd.DataFrame(obj)  # Convert list to DataFrame
+                table_name = current_parent  # Use parent-child format
+                child_tables[table_name] = self._merge_list_objects(obj)  # Convert list to DataFrame
             else:
-                flattened[parent_key] = obj  # Keep column names as is
+                flattened[current_parent.split(self.separator)[-1]] = obj  # Keep column names unchanged
 
-        for parent_key, value in data.items():
-            _flatten(value, parent_name)
+        for key, value in data.items():
+            _flatten(value, parent_name + self.separator + key if isinstance(value, (list, dict)) else parent_name)
 
         root_df = pd.DataFrame([flattened]) if flattened else pd.DataFrame()
         return {parent_name: root_df, **child_tables}
