@@ -22,12 +22,14 @@ class JSONProcessor:
                 for k, v in obj.items():
                     _flatten(v, current_parent)  # Keep column names unchanged
             elif isinstance(obj, list):
-                table_name = f"{current_parent}{self.separator}{k}"  # Parent name + separator + key name
+                table_name = f"{current_parent}{self.separator}{parent_key}"  # Use parent name + separator + key name
                 child_tables[table_name] = pd.DataFrame(obj)  # Convert list to DataFrame
             else:
-                flattened[k] = obj  # Keep column names as is
+                flattened[parent_key] = obj  # Keep column names as is
 
-        _flatten(data, parent_name)
+        for parent_key, value in data.items():
+            _flatten(value, parent_name)
+
         root_df = pd.DataFrame([flattened]) if flattened else pd.DataFrame()
         return {parent_name: root_df, **child_tables}
 
