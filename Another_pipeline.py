@@ -1,6 +1,5 @@
 import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
-from apache_beam.io.gcp.pubsub import ReadFromPubSub  # If using Pub/Sub
 from apache_beam.io.kafka import ReadFromKafka
 import logging
 import datetime
@@ -21,7 +20,6 @@ def run(argv=None):
     pipeline_options = PipelineOptions(argv)
 
     with beam.Pipeline(options=pipeline_options) as pipeline:
-        # Read from Kafka
         messages = (
             pipeline
             | 'ReadFromKafka' >> ReadFromKafka(
@@ -30,32 +28,51 @@ def run(argv=None):
                 # Optional: Set start_offset to 'earliest' to read from the beginning
                 # start_offset='earliest'
             )
-            # If Kafka message has key and value, extract the value:
-            | 'ExtractValue' >> beam.Map(lambda message: message[1])  # message is a tuple (key, value)
-            | 'Decode' >> beam.Map(lambda x: x.decode('utf-8') if isinstance(x, bytes) else x)  # Decode if necessary
+            | 'ExtractValue' >> beam.Map(lambda message: message[1])  # Extract value if message is (key, value)
+            | 'Decode' >> beam.Map(lambda x: x.decode('utf-8') if isinstance(x, bytes) else x)  # Decode if needed
         )
 
-
-        # Write to file in real-time (using a windowing approach)
-        (
+        windowed_messages = (
             messages
-            | 'WindowIntoGlobal' >> beam.WindowInto(beam.window.GlobalWindows()) # For real-time, keep in global window
+            | 'WindowIntoFixedWindows' >> beam.WindowInto(
+                beam.window.FixedWindows(size=5),  # 5-second windows (adjust as needed)
+                trigger=beam.trigger.AfterWatermark(),
+                accumulation_mode=beam.transforms.window.AccumulationMode.ACCUMULATING
+            )
+        )
+
+        grouped_messages = (
+            windowed_messages | 'GroupByKey' >> beam.GroupByKey()
+        )
+
+        processed_messages = (
+            grouped_messages | 'ProcessGroupedMessages' >> beam.ParDo(ProcessGroupedData())
+        )
+
+        (
+            processed_messages
+            | 'Reshuffle' >> beam.Reshuffle() # Remove Window information
             | 'WriteToFile' >> beam.io.WriteToText(
                 OUTPUT_FILE,
                 file_name_suffix='.txt',
                 append_trailing_newlines=True,
-                coder=beam.coders.StrUtf8Coder() # Explicitly set the coder
+                coder=beam.coders.StrUtf8Coder()
             )
         )
 
-        # Log the messages (optional - for debugging/monitoring)
-        messages | 'LogMessages' >> beam.Map(lambda message: logging.info(f"Received message: {message}"))
+        # Log messages (optional) - Can be useful for debugging
+        # messages | 'LogMessages' >> beam.Map(lambda message: logging.info(f"Received message: {message}"))
 
+
+class ProcessGroupedData(beam.DoFn):
+    def process(self, element, window=beam.DoFn.WindowParam):
+        key, values = element
+        count = len(list(values))  # Example: Count messages for each key
+        output = f"Window: {window}, Key: {key}, Count: {count}"
+        logging.info(output)
+        yield output
 
 if __name__ == '__main__':
     logging.info(f"Starting Kafka to File pipeline at {datetime.datetime.now()}")
     run()
     logging.info(f"Kafka to File pipeline finished at {datetime.datetime.now()}")
-
-
-
