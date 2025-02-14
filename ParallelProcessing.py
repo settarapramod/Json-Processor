@@ -31,21 +31,21 @@ def execute_task(task):
     try:
         logging.info(f"Starting Task {task.task_id}")
         time.sleep(random.uniform(1, 3))  # Simulated processing time
-        if random.random() < 0.1:  # Simulating occasional failures
+        if random.random() < 0.2:  # Simulating occasional failures (20% chance)
             raise Exception(f"Simulated failure in Task {task.task_id}")
         result = f"Task {task.task_id} processed successfully"
         logging.info(result)
         return result
     except Exception as e:
         logging.error(f"Error processing Task {task.task_id}: {e}")
-        return f"Task {task.task_id} failed"
+        return None  # Indicate failure
 
 def process_tasks_parallel(tasks, num_workers=None, max_retries=3):
     """
     Process a list of tasks in parallel.
     - Retries failed tasks up to `max_retries` times.
     - Uses `concurrent.futures.ProcessPoolExecutor` for better performance.
-    
+
     :param tasks: List of Task objects.
     :param num_workers: Number of parallel workers (defaults to CPU count).
     :param max_retries: Number of retries for failed tasks.
@@ -54,24 +54,31 @@ def process_tasks_parallel(tasks, num_workers=None, max_retries=3):
     logging.info(f"Starting parallel task execution with {num_workers} workers.")
 
     results = {}
-    retry_queue = {task: 0 for task in tasks}  # Track retry attempts
+    retry_count = {task.task_id: 0 for task in tasks}  # Track retries per task
 
-    while retry_queue:
+    while tasks:
+        failed_tasks = []  # Collect failed tasks for retry
+
         with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
-            future_to_task = {executor.submit(execute_task, task): task for task in retry_queue}
+            future_to_task = {executor.submit(execute_task, task): task for task in tasks}
 
             for future in concurrent.futures.as_completed(future_to_task):
                 task = future_to_task[future]
                 try:
                     result = future.result()
-                    if "failed" in result and retry_queue[task] < max_retries:
-                        retry_queue[task] += 1
-                        logging.warning(f"Retrying Task {task.task_id} (Attempt {retry_queue[task]}/{max_retries})")
+                    if result:
+                        results[task.task_id] = result  # Store successful task result
                     else:
-                        results[task.task_id] = result
-                        retry_queue.pop(task, None)  # Remove successful task from retry queue
+                        if retry_count[task.task_id] < max_retries:
+                            retry_count[task.task_id] += 1
+                            logging.warning(f"Retrying Task {task.task_id} (Attempt {retry_count[task.task_id]}/{max_retries})")
+                            failed_tasks.append(task)
+                        else:
+                            results[task.task_id] = f"Task {task.task_id} failed after {max_retries} attempts"
                 except Exception as e:
                     logging.error(f"Unhandled error in Task {task.task_id}: {e}")
+
+        tasks = failed_tasks  # Retry only failed tasks in the next loop
 
     logging.info("All tasks completed.")
     return results
