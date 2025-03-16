@@ -1,0 +1,68 @@
+**Data Streaming Framework (DSF): A Comprehensive Overview**
+
+The **Data Streaming Framework (DSF)** is a **generic, metadata-driven framework** designed to handle **real-time data streaming, processing, and storage** in a **scalable, configuration-driven, and efficient manner**. Built using the **Apache Beam SDK** and programmatically developed in **Python**, DSF is engineered to provide a robust solution for managing high-velocity data streams across diverse environments. The framework leverages the power of **Apache Beam** for pipeline execution, ensuring **portability** across various data processing engines such as **Google Dataflow** and **Apache Spark**. This flexibility allows DSF to seamlessly integrate into different ecosystems, whether on-premise or in the cloud.
+
+One of the key strengths of DSF lies in its **high configurability**. All user-specific configurations, including data sources, processing logic, and storage details, are stored in **configuration tables within an MSSQL Server**. This design ensures that the framework can be easily adapted to different use cases without requiring extensive code changes. DSF is programmed to work with both **Google BigQuery** for cloud-based data warehousing and **on-premise Microsoft SQL Server** for traditional database systems. The only differences lie in the database-related methods, which are abstracted to maintain consistency across environments.
+
+### **The Four Phases of DSF**
+
+DSF operates through four distinct phases, each designed to handle a specific aspect of the data streaming and processing workflow. These phases are:
+
+1. **Ingest Phase**  
+2. **Flatten Phase**  
+3. **Summarise Phase**  
+4. **Publish Phase**  
+
+Each phase is meticulously designed to ensure efficient data handling, transformation, and delivery, enabling near-real-time data processing and insights.
+
+---
+
+### **1. Ingest Phase**
+
+The **Ingest Phase** serves as the entry point for data into the DSF ecosystem. This phase is responsible for **connecting to data sources** and **ingesting raw data streams**. DSF supports integration with both **on-premise Kafka** and **Google Cloud Pub/Sub** for cloud-based environments. The framework is **metadata-driven**, meaning that all configurations related to Kafka topics or Pub/Sub subscriptions are stored in the configuration tables. This allows users to easily define and manage data sources without modifying the core code.
+
+During this phase, **Apache Beam pipelines** run continuously to **poll messages** from Kafka or Pub/Sub. The framework is designed to handle high-throughput data streams efficiently. Once a message is retrieved, it is written to the database in its raw form, along with additional metadata such as the **topic name**, **offset value**, **timestamp**, and **partition number**. This metadata is crucial for tracking and debugging purposes. The writing process is performed in parallel to ensure high performance and scalability. After the data is stored, it is passed to the next phase for further processing.
+
+---
+
+### **2. Flatten Phase**
+
+The **Flatten Phase** is where the raw data undergoes its first transformation. In this phase, the ingested messages are **flattened** into a structured format suitable for downstream processing. The flattening process is guided by user-defined configurations, which specify how the data should be organized into **root and child tables**.
+
+- The **root table** stores all the **key-value pairs** from the original message.  
+- If the message contains any **lists or nested structures**, these are stored in **separate child tables**. Each child table includes a **foreign key** that links it back to the root table, enabling easy data reconstruction and querying.
+
+This phase ensures that the data is normalized and stored in a relational format, making it easier to query and analyze. The flattened data is written back to the database in parallel, ensuring high throughput. Once the flattening process is complete, the data is passed to the **Summarise Phase** for aggregation and summarization.
+
+---
+
+### **3. Summarise Phase**
+
+The **Summarise Phase** is where the framework applies **aggregation logic** to the flattened data. This phase is critical for transforming raw data into meaningful insights. Users can define **summarization logic** through **drivers**, which are configurable components that specify how data points should be aggregated.
+
+- The framework collects all the required data points based on the user-defined drivers.  
+- It then applies the summarization logic to aggregate the data into a **single, consolidated data point**.  
+- This process can include operations such as **summing**, **averaging**, **counting**, or any other custom aggregation logic.
+
+The summarised data is written back to the database in parallel, ensuring that the system remains efficient and scalable. Once summarization is complete, the data is passed to the final phase, the **Publish Phase**, for delivery to end-users.
+
+---
+
+### **4. Publish Phase**
+
+The **Publish Phase** is the final stage in the DSF workflow. In this phase, the summarised data is **de-normalized** and transformed into a **publishable format**. The framework then publishes this data to the appropriate output channels, which can be either **Kafka** for on-premise environments or **Google Cloud Pub/Sub** for cloud-based systems.
+
+- The data is published to a specific topic, allowing downstream systems or users to subscribe and consume the summarised data in **near real-time**.  
+- This phase ensures that the processed data is made available to stakeholders quickly, enabling timely decision-making and action.
+
+---
+
+### **Key Features and Benefits of DSF**
+
+1. **Metadata-Driven Configuration**: DSF’s reliance on metadata for configuration makes it highly adaptable to different use cases without requiring code changes.  
+2. **Scalability**: The framework is designed to handle high-throughput data streams efficiently, thanks to its parallel processing capabilities.  
+3. **Portability**: By leveraging Apache Beam, DSF can run on multiple data processing engines, providing flexibility across environments.  
+4. **Real-Time Processing**: DSF ensures near-real-time data processing, making it ideal for use cases requiring timely insights.  
+5. **Extensibility**: The framework’s modular design allows for easy extension and customization to meet specific business needs.  
+
+In summary, the **Data Streaming Framework (DSF)** is a powerful, flexible, and scalable solution for real-time data processing. Its four-phase architecture—**Ingest, Flatten, Summarise, and Publish**—ensures that data is efficiently processed, transformed, and delivered to end-users in a timely manner. Whether deployed on-premise or in the cloud, DSF provides a robust foundation for managing high-velocity data streams and deriving actionable insights.
