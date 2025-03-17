@@ -1,0 +1,107 @@
+Here’s a full-length presentation speech for your DSF demo. This script will help you clearly explain the framework, its phases, and its key benefits while keeping your team engaged.
+
+
+---
+
+Presentation Script: Data Streaming Framework (DSF) Demo
+
+[Opening]
+"Good [morning/afternoon], everyone. Today, I’m excited to walk you through the Data Streaming Framework—or DSF—a solution designed for real-time data ingestion, processing, and storage. Whether we're handling on-premise Kafka streams or cloud-based Pub/Sub events, DSF ensures high efficiency, scalability, and adaptability. In this session, I’ll provide an overview of the framework, explain its architecture, and give a live demo of how it works in action."
+
+
+---
+
+1. Introduction to DSF
+
+"Let’s start with why DSF exists. In modern data ecosystems, we often deal with high-velocity streaming data from multiple sources. Traditional batch processing methods don’t cut it anymore because they introduce delays and don’t scale efficiently. That’s where DSF comes in. It’s built using Apache Beam, which means it can run on various execution engines like Google Dataflow, Apache Spark, or Flink. It is highly configurable, meaning we don’t need to write new code to add a data source or modify the processing logic—we just update our configuration tables in SQL Server."
+
+"At a high level, DSF consists of four major phases: Ingest, Flatten, Summarise, and Publish. Each phase plays a crucial role in ensuring data flows efficiently from the source to the final destination while maintaining its integrity and usability. Now, let’s go deeper into each phase."
+
+
+---
+
+2. DSF Phases Breakdown
+
+Phase 1: Ingest
+
+"The Ingest phase is where DSF connects to data sources and pulls in raw messages. It supports Kafka for on-premise environments and Pub/Sub for cloud-based environments. Apache Beam pipelines continuously listen for incoming messages and store them in our database with metadata such as timestamps, topic names, partitions, and offsets. This ensures traceability and allows us to debug any issues easily. Now, let’s move to the next phase—Flatten."
+
+Phase 2: Flatten
+
+*"Once data is ingested, we need to structure it properly. This is handled in the Flatten phase. Raw messages often contain nested JSON, lists, or complex structures, which makes querying difficult. DSF transforms these into a relational format:
+
+Root tables store all top-level key-value pairs.
+
+Child tables store lists and nested objects, linked back to the root table using foreign keys.
+
+
+This ensures data is properly structured for efficient querying and processing in later stages."*
+
+Phase 3: Summarise
+
+"After flattening, we move to the Summarise phase. Here, DSF applies aggregation logic, such as summing, averaging, counting, or any custom transformations defined in the configuration. The summarisation logic is flexible—users can specify what data needs to be aggregated and how. This results in meaningful insights, making the data more useful for downstream applications."
+
+Phase 4: Publish
+
+"Finally, in the Publish phase, the processed data is sent to its final destination. DSF can publish summarised data back to Kafka for further processing or push it to Google Cloud Pub/Sub for real-time analytics. This allows other applications to subscribe and consume data instantly, enabling real-time dashboards and automated workflows."
+
+
+---
+
+3. Key Features and Benefits
+
+"To summarize, here’s why DSF stands out as a powerful data streaming solution:"
+
+Metadata-Driven Configuration – All sources, transformations, and destinations are controlled through SQL configuration tables.
+
+Scalability – DSF handles high-throughput streams efficiently with parallel processing.
+
+Portability – Thanks to Apache Beam, DSF can run on Dataflow, Spark, Flink, or even locally.
+
+Real-Time Processing – DSF enables near real-time data streaming and decision-making.
+
+Extensibility – New sources or transformations can be added without major code changes.
+
+
+
+---
+
+4. Live Demo
+
+"Now, let’s see DSF in action."
+
+[Demo Steps]
+
+1. Start the DSF pipeline – Run the Apache Beam job for ingestion.
+
+
+2. Simulate a data stream – Push a sample Kafka/PubSub message.
+
+
+3. Observe raw data ingestion – Show the raw JSON stored in SQL Server.
+
+
+4. Demonstrate the Flatten Phase – Show how the JSON is split into root and child tables.
+
+
+5. Run Summarisation – Show an example of data aggregation.
+
+
+6. Publish data to Kafka/Pub/Sub – Display the final published dataset.
+
+
+7. Verify results – Query the final summarised dataset in the database.
+
+
+
+
+---
+
+5. Closing and Q&A
+
+"That concludes our demo of the Data Streaming Framework. As you can see, DSF is designed to make real-time data processing seamless, scalable, and easy to manage. Whether we’re dealing with structured, semi-structured, or nested data, DSF ensures that everything is processed efficiently and made available for real-time analytics. Now, I’d love to take any questions you may have!"
+
+
+---
+
+This script ensures a smooth, structured presentation while keeping it engaging and informative. Let me know if you need modifications or additional details for specific areas. Good luck with your presentation!
